@@ -86,7 +86,7 @@ export default function Dashboard() {
             {isLoadingSummary ? <Skeleton className="h-8 w-16" /> : (
               <>
                 <div className="text-3xl font-bold text-white">
-                  {summary?.avgConfidence ? (summary.avgConfidence * 100).toFixed(1) : 0}%
+                  {summary?.avgConfidence ? summary.avgConfidence.toFixed(1) : 0}%
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Sur l'ensemble des prédictions
@@ -138,7 +138,7 @@ export default function Dashboard() {
                         <div className="text-center md:text-right">
                           <p className="text-xs text-muted-foreground uppercase font-mono">Confiance</p>
                           <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-0">
-                            {(match.confidence * 100).toFixed(0)}%
+                            {match.confidence.toFixed(0)}%
                           </Badge>
                         </div>
                       </div>

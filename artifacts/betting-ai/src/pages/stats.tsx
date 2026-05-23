@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { BrainCircuit, TrendingUp, Crosshair, Target, CheckCircle2, XCircle } from "lucide-react";
-import type { GetAiPerformancePeriod } from "@workspace/api-client-react/src/generated/api.schemas";
+import type { GetAiPerformancePeriod } from "@workspace/api-client-react";
 import aiBg from "@/assets/ai-bg.png";
 
 export default function Stats() {

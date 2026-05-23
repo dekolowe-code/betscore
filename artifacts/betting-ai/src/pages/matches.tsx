@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Clock, Search, Zap, Activity, CalendarDays, CheckCircle2 } from "lucide-react";
-import type { GetTodaysMatchesStatus } from "@workspace/api-client-react/src/generated/api.schemas";
+import type { GetTodaysMatchesStatus } from "@workspace/api-client-react";
 
 export default function Matches() {
   const [searchTerm, setSearchTerm] = useState("");

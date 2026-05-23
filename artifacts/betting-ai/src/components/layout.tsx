@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHealthCheck } from "@workspace/api-client-react";
 import { Show, useClerk, useUser } from "@clerk/react";
+import { ValueBetsNotification } from "@/components/value-bets-notification";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -44,7 +45,8 @@ export function Layout({ children }: LayoutProps) {
     <>
       <div className="mb-8 px-4 flex items-center gap-3">
         <BrainCircuit className="h-8 w-8 text-primary" />
-        <span className="text-xl font-bold tracking-tight text-white uppercase text-glow">BettingAI</span>
+        <span className="text-xl font-bold tracking-tight text-white uppercase text-glow flex-1">BettingAI</span>
+        <ValueBetsNotification />
       </div>
       <nav className="flex flex-col gap-2 flex-1 px-2">
         {navigation.map((item) => {
@@ -130,10 +132,11 @@ export function Layout({ children }: LayoutProps) {
             <NavLinks />
           </SheetContent>
         </Sheet>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <BrainCircuit className="h-6 w-6 text-primary" />
           <span className="text-lg font-bold tracking-tight text-white uppercase">BettingAI</span>
         </div>
+        <ValueBetsNotification />
       </header>
 
       {/* Main Content */}

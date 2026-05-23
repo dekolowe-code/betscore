@@ -13,13 +13,10 @@ export default function MatchDetail() {
   const params = useParams();
   const matchId = params.id ? parseInt(params.id) : 0;
 
-  const { data: match, isLoading: isLoadingMatch } = useGetMatch(matchId, {
-    query: { enabled: !!matchId }
-  });
-
-  const { data: analysis, isLoading: isLoadingAnalysis } = useGetMatchAnalysis(matchId, {
-    query: { enabled: !!matchId }
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: match, isLoading: isLoadingMatch } = useGetMatch(matchId, { query: { enabled: !!matchId } as any });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: analysis, isLoading: isLoadingAnalysis } = useGetMatchAnalysis(matchId, { query: { enabled: !!matchId } as any });
 
   if (isLoadingMatch || isLoadingAnalysis) {
     return (
@@ -168,7 +165,7 @@ export default function MatchDetail() {
                             <span className="text-muted-foreground">Indice de confiance IA</span>
                             <span className="text-white font-mono font-bold">{(topPred.confidence * 100).toFixed(1)}%</span>
                           </div>
-                          <Progress value={topPred.confidence * 100} className="h-2 bg-secondary" indicatorColor="bg-primary" />
+                          <Progress value={topPred.confidence * 100} className="h-2 bg-secondary [&>div]:bg-primary" />
                         </div>
                       </div>
 

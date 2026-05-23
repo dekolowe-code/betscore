@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BrainCircuit, Copy, Check, Zap, AlertTriangle, ShieldCheck, Flame, Loader2, History, Calendar, CalendarDays, CalendarRange } from "lucide-react";
 import couponBg from "@/assets/coupon-bg.png";
-import type { CouponLevel } from "@workspace/api-client-react/src/generated/api.schemas";
+import type { CouponLevel } from "@workspace/api-client-react";
 
 type Period = "today" | "weekend" | "week" | "month";
 
