@@ -3,20 +3,27 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BettingAI — Assistant IA de Paris Sportifs
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: matches
+    description: Football matches
+  - name: coupons
+    description: Betting coupons
+  - name: stats
+    description: AI performance statistics
+  - name: leagues
+    description: Available leagues
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +31,430 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /matches/today:
+    get:
+      operationId: getTodaysMatches
+      tags: [matches]
+      summary: Get all matches of the day with AI predictions
+      parameters:
+        - name: league
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [scheduled, live, finished]
+      responses:
+        "200":
+          description: List of today's matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /matches/{id}:
+    get:
+      operationId: getMatch
+      tags: [matches]
+      summary: Get a single match with full details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchDetail"
+        "404":
+          description: Match not found
+
+  /matches/{id}/analysis:
+    get:
+      operationId: getMatchAnalysis
+      tags: [matches]
+      summary: Get AI analysis for a specific match
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: AI analysis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prediction"
+        "404":
+          description: Match not found
+
+  /coupons/generate:
+    post:
+      operationId: generateCoupon
+      tags: [coupons]
+      summary: Generate a betting coupon for a target odd
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponRequest"
+      responses:
+        "200":
+          description: Generated coupon variants
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponVariants"
+
+  /coupons/today:
+    get:
+      operationId: getTodayCoupons
+      tags: [coupons]
+      summary: Get pre-generated coupons for today (3 levels)
+      responses:
+        "200":
+          description: Today's featured coupons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+
+  /coupons/history:
+    get:
+      operationId: getCouponHistory
+      tags: [coupons]
+      summary: Get coupon history
+      responses:
+        "200":
+          description: Coupon history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+
+  /stats/performance:
+    get:
+      operationId: getAiPerformance
+      tags: [stats]
+      summary: Get AI prediction performance stats
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["7d", "30d", "90d", "all"]
+      responses:
+        "200":
+          description: AI performance statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceStats"
+
+  /stats/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [stats]
+      summary: Get dashboard summary (totals, live count, top markets)
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /leagues:
+    get:
+      operationId: getLeagues
+      tags: [leagues]
+      summary: Get all leagues available today
+      responses:
+        "200":
+          description: Available leagues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/League"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    Match:
+      type: object
+      required: [id, homeTeam, awayTeam, league, country, kickoffAt, status, topPrediction, confidence]
+      properties:
+        id:
+          type: integer
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        league:
+          type: string
+        country:
+          type: string
+        kickoffAt:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, live, finished]
+        homeScore:
+          type: ["integer", "null"]
+        awayScore:
+          type: ["integer", "null"]
+        topPrediction:
+          type: string
+        topOdd:
+          type: number
+        confidence:
+          type: number
+        isValueBet:
+          type: boolean
+
+    MatchDetail:
+      type: object
+      required: [id, homeTeam, awayTeam, league, country, kickoffAt, status, homeForm, awayForm, predictions]
+      properties:
+        id:
+          type: integer
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        league:
+          type: string
+        country:
+          type: string
+        kickoffAt:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, live, finished]
+        homeScore:
+          type: ["integer", "null"]
+        awayScore:
+          type: ["integer", "null"]
+        homeForm:
+          type: string
+        awayForm:
+          type: string
+        predictions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Prediction"
+        odds:
+          type: array
+          items:
+            $ref: "#/components/schemas/OddEntry"
+
+    Prediction:
+      type: object
+      required: [market, selection, confidence, reasoning, oddValue]
+      properties:
+        market:
+          type: string
+        marketLabel:
+          type: string
+        selection:
+          type: string
+        selectionLabel:
+          type: string
+        confidence:
+          type: number
+        reasoning:
+          type: string
+        oddValue:
+          type: number
+        isValueBet:
+          type: boolean
+
+    OddEntry:
+      type: object
+      required: [bookmaker, market, selection, oddValue]
+      properties:
+        bookmaker:
+          type: string
+        market:
+          type: string
+        selection:
+          type: string
+        oddValue:
+          type: number
+
+    CouponRequest:
+      type: object
+      required: [targetOdd]
+      properties:
+        targetOdd:
+          type: number
+        bookmaker:
+          type: ["string", "null"]
+
+    CouponSelection:
+      type: object
+      required: [matchId, homeTeam, awayTeam, market, marketLabel, selection, selectionLabel, oddValue, confidence]
+      properties:
+        matchId:
+          type: integer
+        homeTeam:
+          type: string
+        awayTeam:
+          type: string
+        market:
+          type: string
+        marketLabel:
+          type: string
+        selection:
+          type: string
+        selectionLabel:
+          type: string
+        oddValue:
+          type: number
+        confidence:
+          type: number
+        reasoning:
+          type: string
+
+    Coupon:
+      type: object
+      required: [id, targetOdd, actualOdd, selections, confidenceAvg, bookmaker, status, level, createdAt]
+      properties:
+        id:
+          type: integer
+        targetOdd:
+          type: number
+        actualOdd:
+          type: number
+        selections:
+          type: array
+          items:
+            $ref: "#/components/schemas/CouponSelection"
+        confidenceAvg:
+          type: number
+        bookmaker:
+          type: string
+        status:
+          type: string
+          enum: [pending, won, lost]
+        level:
+          type: string
+          enum: [prudent, standard, risque]
+        warning:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    CouponVariants:
+      type: object
+      required: [prudent, standard, risque]
+      properties:
+        prudent:
+          $ref: "#/components/schemas/Coupon"
+        standard:
+          $ref: "#/components/schemas/Coupon"
+        risque:
+          $ref: "#/components/schemas/Coupon"
+
+    PerformanceStats:
+      type: object
+      required: [period, totalPredictions, correctPredictions, winRate, avgConfidence, bestMarket, worstMarket, recentResults]
+      properties:
+        period:
+          type: string
+        totalPredictions:
+          type: integer
+        correctPredictions:
+          type: integer
+        winRate:
+          type: number
+        avgConfidence:
+          type: number
+        bestMarket:
+          type: string
+        worstMarket:
+          type: string
+        recentResults:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentResult"
+
+    RecentResult:
+      type: object
+      required: [date, market, selection, correct, confidence]
+      properties:
+        date:
+          type: string
+        market:
+          type: string
+        selection:
+          type: string
+        correct:
+          type: boolean
+        confidence:
+          type: number
+
+    DashboardSummary:
+      type: object
+      required: [totalMatchesToday, liveMatchesCount, scheduledMatchesCount, finishedMatchesCount, totalCouponsToday, avgConfidence, valueBetsCount, topLeague]
+      properties:
+        totalMatchesToday:
+          type: integer
+        liveMatchesCount:
+          type: integer
+        scheduledMatchesCount:
+          type: integer
+        finishedMatchesCount:
+          type: integer
+        totalCouponsToday:
+          type: integer
+        avgConfidence:
+          type: number
+        valueBetsCount:
+          type: integer
+        topLeague:
+          type: string
+
+    League:
+      type: object
+      required: [id, name, country, matchCount, logo]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        country:
+          type: string
+        matchCount:
+          type: integer
+        logo:
+          type: string

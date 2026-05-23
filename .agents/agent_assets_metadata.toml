@@ -1,0 +1,26 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "9mk8pKYJlvug_ibMs-LDe"
+uri = "file://artifacts/betting-ai/src/assets/hero-stadium.png"
+type = "image"
+title = "Dramatic stadium hero at night"
+
+[[generated]]
+id = "T0-F3W4OLDuvQstWmJbz3"
+uri = "file://artifacts/betting-ai/src/assets/coupon-bg.png"
+type = "image"
+title = "Analyst reviewing tactical screen"
+
+[[generated]]
+id = "5eaqjRv3oruEbmd_o_QM_"
+uri = "file://artifacts/betting-ai/src/assets/ai-bg.png"
+type = "image"
+title = "AI neural network football overlay"
+
+[[generated]]
+id = "XRCSVAbvdpgcfMa0B_UXC"
+uri = "file://artifacts/betting-ai/src/assets/match-bg.png"
+type = "image"
+title = "Football match action shot"
