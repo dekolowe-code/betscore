@@ -1,20 +1,23 @@
 import { Link, useLocation } from "wouter";
-import { 
-  Activity, 
-  BarChart2, 
-  CopyCheck, 
-  Home, 
-  Settings, 
+import {
+  Activity,
+  BarChart2,
+  CopyCheck,
+  Home,
   Trophy,
   Menu,
   BrainCircuit,
   Wifi,
-  WifiOff
+  WifiOff,
+  LogIn,
+  LogOut,
+  UserCircle2,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHealthCheck } from "@workspace/api-client-react";
+import { Show, useClerk, useUser } from "@clerk/react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -24,6 +27,10 @@ export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { data: health, isError: isHealthError } = useHealthCheck();
+  const { signOut } = useClerk();
+  const { user } = useUser();
+
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   const navigation = [
     { name: "Accueil", href: "/", icon: Home },
@@ -46,7 +53,7 @@ export function Layout({ children }: LayoutProps) {
             <Link key={item.name} href={item.href} className="w-full">
               <Button
                 variant={isActive ? "secondary" : "ghost"}
-                className={`w-full justify-start ${isActive ? 'bg-secondary text-primary' : 'text-muted-foreground hover:text-white hover:bg-white/5'}`}
+                className={`w-full justify-start ${isActive ? "bg-secondary text-primary" : "text-muted-foreground hover:text-white hover:bg-white/5"}`}
                 onClick={() => setIsMobileOpen(false)}
               >
                 <item.icon className="mr-3 h-5 w-5" />
@@ -56,14 +63,49 @@ export function Layout({ children }: LayoutProps) {
           );
         })}
       </nav>
-      <div className="mt-auto px-4 py-4 text-xs text-muted-foreground border-t border-border flex items-center justify-between">
-        <span>Système IA v2.4.1</span>
-        <div className="flex items-center gap-1">
-          {isHealthError ? (
-             <WifiOff className="h-3 w-3 text-destructive" />
-          ) : (
-             <Wifi className="h-3 w-3 text-primary animate-pulse" />
-          )}
+
+      {/* Auth section at bottom */}
+      <div className="mt-auto px-3 pt-3 pb-2 border-t border-border space-y-2">
+        <Show when="signed-in">
+          <div className="flex items-center gap-2 px-1 py-2">
+            <UserCircle2 className="h-5 w-5 text-primary shrink-0" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-white truncate">{user?.firstName || user?.username || "Utilisateur"}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-white hover:bg-white/5 text-sm"
+            onClick={() => signOut({ redirectUrl: basePath || "/" })}
+            data-testid="button-sign-out"
+          >
+            <LogOut className="mr-3 h-4 w-4" />
+            Se déconnecter
+          </Button>
+        </Show>
+        <Show when="signed-out">
+          <Link href="/sign-in">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10 text-sm font-medium"
+              data-testid="button-sign-in"
+            >
+              <LogIn className="mr-3 h-4 w-4" />
+              Se connecter
+            </Button>
+          </Link>
+        </Show>
+
+        <div className="flex items-center justify-between px-1 pt-1">
+          <span className="text-[10px] text-muted-foreground">Système IA v2.4.1</span>
+          <div className="flex items-center gap-1">
+            {isHealthError ? (
+              <WifiOff className="h-3 w-3 text-destructive" />
+            ) : (
+              <Wifi className="h-3 w-3 text-primary animate-pulse" />
+            )}
+          </div>
         </div>
       </div>
     </>

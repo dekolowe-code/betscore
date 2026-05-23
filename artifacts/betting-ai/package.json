@@ -72,6 +72,9 @@
     "vaul": "^1.1.2",
     "vite": "catalog:",
     "wouter": "^3.3.5",
-    "zod": "catalog:"
-  }
+    "zod": "catalog:",
+    "@clerk/react": "^6.7.0",
+    "@clerk/themes": "^2.4.57"
+  },
+  "dependencies": {}
 }

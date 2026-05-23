@@ -81,10 +81,25 @@ export interface MatchDetail {
   odds?: OddEntry[];
 }
 
+/**
+ * @nullable
+ */
+export type CouponRequestPeriod = typeof CouponRequestPeriod[keyof typeof CouponRequestPeriod] | null;
+
+
+export const CouponRequestPeriod = {
+  today: 'today',
+  weekend: 'weekend',
+  week: 'week',
+  month: 'month',
+} as const;
+
 export interface CouponRequest {
   targetOdd: number;
   /** @nullable */
   bookmaker?: string | null;
+  /** @nullable */
+  period?: CouponRequestPeriod;
 }
 
 export interface CouponSelection {

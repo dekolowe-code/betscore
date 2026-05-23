@@ -105,7 +105,8 @@ export const GetMatchAnalysisResponse = zod.array(GetMatchAnalysisResponseItem)
  */
 export const GenerateCouponBody = zod.object({
   "targetOdd": zod.number(),
-  "bookmaker": zod.string().nullish()
+  "bookmaker": zod.string().nullish(),
+  "period": zod.union([zod.literal('today'),zod.literal('weekend'),zod.literal('week'),zod.literal('month'),zod.literal(null)]).nullish()
 })
 
 export const GenerateCouponResponse = zod.object({

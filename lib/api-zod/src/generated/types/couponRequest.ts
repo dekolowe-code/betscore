@@ -5,9 +5,12 @@
  * BettingAI — Assistant IA de Paris Sportifs
  * OpenAPI spec version: 0.1.0
  */
+import type { CouponRequestPeriod } from './couponRequestPeriod';
 
 export interface CouponRequest {
   targetOdd: number;
   /** @nullable */
   bookmaker?: string | null;
+  /** @nullable */
+  period?: CouponRequestPeriod;
 }

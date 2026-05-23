@@ -114,6 +114,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CouponRequest"
+
       responses:
         "200":
           description: Generated coupon variants
@@ -319,6 +320,9 @@ components:
           type: number
         bookmaker:
           type: ["string", "null"]
+        period:
+          type: ["string", "null"]
+          enum: ["today", "weekend", "week", "month", null]
 
     CouponSelection:
       type: object

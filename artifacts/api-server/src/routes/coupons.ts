@@ -1,15 +1,47 @@
 import { Router } from "express";
 import { db, couponsTable, matchesTable, predictionsTable } from "@workspace/db";
-import { desc, eq, gte, sql } from "drizzle-orm";
+import { desc, eq, gte, and, lt } from "drizzle-orm";
 import { GenerateCouponBody } from "@workspace/api-zod";
 
 const router = Router();
+
+function getPeriodRange(period?: string | null): { start: Date; end: Date } {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  switch (period) {
+    case "weekend": {
+      const dayOfWeek = now.getDay();
+      const daysToSaturday = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
+      const saturdayStart = new Date(todayStart);
+      saturdayStart.setDate(todayStart.getDate() + daysToSaturday);
+      const sundayEnd = new Date(saturdayStart);
+      sundayEnd.setDate(saturdayStart.getDate() + 2);
+      return { start: saturdayStart, end: sundayEnd };
+    }
+    case "week": {
+      const weekEnd = new Date(todayStart);
+      weekEnd.setDate(todayStart.getDate() + 7);
+      return { start: todayStart, end: weekEnd };
+    }
+    case "month": {
+      const monthEnd = new Date(todayStart);
+      monthEnd.setMonth(todayStart.getMonth() + 1);
+      return { start: todayStart, end: monthEnd };
+    }
+    default: {
+      const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+      return { start: todayStart, end: todayEnd };
+    }
+  }
+}
 
 function buildCoupon(
   predictions: Array<{
     matchId: number;
     homeTeam: string;
     awayTeam: string;
+    kickoffAt: Date;
     market: string;
     marketLabel: string;
     selection: string;
@@ -31,11 +63,14 @@ function buildCoupon(
 
   const selected: typeof candidates = [];
   let currentOdd = 1.0;
+  const usedMatches = new Set<number>();
 
   for (const candidate of candidates) {
+    if (usedMatches.has(candidate.matchId)) continue;
     if (currentOdd * candidate.oddValue <= targetOdd + tolerance) {
       selected.push(candidate);
       currentOdd *= candidate.oddValue;
+      usedMatches.add(candidate.matchId);
     }
     if (Math.abs(currentOdd - targetOdd) <= tolerance) break;
   }
@@ -54,7 +89,10 @@ function buildCoupon(
     id: idOffset,
     targetOdd,
     actualOdd: parseFloat(currentOdd.toFixed(2)),
-    selections: selected,
+    selections: selected.map(s => ({
+      ...s,
+      kickoffAt: s.kickoffAt.toISOString(),
+    })),
     confidenceAvg: parseFloat(confidenceAvg.toFixed(1)),
     bookmaker,
     status: "pending",
@@ -86,17 +124,17 @@ router.post("/coupons/generate", async (req, res) => {
     return;
   }
 
-  const { targetOdd, bookmaker } = parseResult.data;
+  const { targetOdd, bookmaker, period } = parseResult.data;
   const bm = bookmaker ?? "1xBet";
 
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const { start, end } = getPeriodRange(period);
 
   const rows = await db
     .select({
       matchId: matchesTable.id,
       homeTeam: matchesTable.homeTeam,
       awayTeam: matchesTable.awayTeam,
+      kickoffAt: matchesTable.kickoffAt,
       market: predictionsTable.market,
       marketLabel: predictionsTable.marketLabel,
       selection: predictionsTable.selection,
@@ -107,12 +145,13 @@ router.post("/coupons/generate", async (req, res) => {
     })
     .from(predictionsTable)
     .innerJoin(matchesTable, eq(predictionsTable.matchId, matchesTable.id))
-    .where(gte(matchesTable.kickoffAt, startOfDay));
+    .where(and(gte(matchesTable.kickoffAt, start), lt(matchesTable.kickoffAt, end)));
 
   const preds = rows.map((r) => ({
     matchId: r.matchId,
     homeTeam: r.homeTeam,
     awayTeam: r.awayTeam,
+    kickoffAt: r.kickoffAt,
     market: r.market,
     marketLabel: r.marketLabel,
     selection: r.selection,

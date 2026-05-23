@@ -9,6 +9,7 @@
 export * from './coupon';
 export * from './couponLevel';
 export * from './couponRequest';
+export * from './couponRequestPeriod';
 export * from './couponSelection';
 export * from './couponStatus';
 export * from './couponVariants';

@@ -8,9 +8,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BrainCircuit, Copy, Check, Zap, AlertTriangle, ShieldCheck, Flame, Loader2, History } from "lucide-react";
+import { BrainCircuit, Copy, Check, Zap, AlertTriangle, ShieldCheck, Flame, Loader2, History, Calendar, CalendarDays, CalendarRange } from "lucide-react";
 import couponBg from "@/assets/coupon-bg.png";
 import type { CouponLevel } from "@workspace/api-client-react/src/generated/api.schemas";
+
+type Period = "today" | "weekend" | "week" | "month";
+
+const PERIOD_OPTIONS: { value: Period; label: string; sublabel: string; icon: typeof Calendar }[] = [
+  { value: "today", label: "Aujourd'hui", sublabel: "Matchs du jour", icon: Zap },
+  { value: "weekend", label: "Ce Week-end", sublabel: "Sam. & Dim.", icon: Calendar },
+  { value: "week", label: "Cette Semaine", sublabel: "7 prochains jours", icon: CalendarDays },
+  { value: "month", label: "Ce Mois", sublabel: "30 prochains jours", icon: CalendarRange },
+];
 
 export default function Coupons() {
   const { data: todayCoupons, isLoading: isLoadingToday } = useGetTodayCoupons();
@@ -18,12 +27,14 @@ export default function Coupons() {
   const generateMutation = useGenerateCoupon();
   
   const [targetOdd, setTargetOdd] = useState<number>(5);
+  const [period, setPeriod] = useState<Period>("today");
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
   const handleGenerate = () => {
     generateMutation.mutate({
       data: {
-        targetOdd
+        targetOdd,
+        period,
       }
     });
   };
@@ -34,7 +45,6 @@ export default function Coupons() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Render a coupon card
   const renderCoupon = (coupon: any, title?: string) => {
     if (!coupon) return null;
     
@@ -64,7 +74,7 @@ export default function Coupons() {
                 {title || coupon.level}
               </CardTitle>
               <CardDescription className="font-mono mt-1 text-muted-foreground text-xs">
-                ID: {coupon.id} • Confiance moy: {(coupon.confidenceAvg * 100).toFixed(1)}%
+                ID: {coupon.id} • Confiance moy: {coupon.confidenceAvg.toFixed(1)}%
               </CardDescription>
             </div>
             <div className="text-right">
@@ -87,9 +97,16 @@ export default function Coupons() {
             {coupon.selections.map((sel: any, idx: number) => (
               <div key={idx} className="p-4 hover:bg-secondary/20 transition-colors">
                 <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold text-white text-sm">{sel.homeTeam} - {sel.awayTeam}</div>
-                  <Badge variant="outline" className="font-mono bg-background text-[10px] border-border">
-                    {(sel.confidence * 100).toFixed(0)}% conf.
+                  <div>
+                    <div className="font-bold text-white text-sm">{sel.homeTeam} - {sel.awayTeam}</div>
+                    {sel.kickoffAt && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {new Date(sel.kickoffAt).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    )}
+                  </div>
+                  <Badge variant="outline" className="font-mono bg-background text-[10px] border-border shrink-0 ml-2">
+                    {sel.confidence.toFixed(0)}% conf.
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center text-sm">
@@ -108,7 +125,7 @@ export default function Coupons() {
                 className="w-full border-border bg-background hover:bg-secondary hover:text-white"
                 onClick={() => copyToClipboard(
                   `Coupon BettingAI - Cote ${coupon.actualOdd.toFixed(2)}\n` + 
-                  coupon.selections.map((s:any) => `${s.homeTeam}-${s.awayTeam}: ${s.selectionLabel}`).join('\n'), 
+                  coupon.selections.map((s:any) => `${s.homeTeam}-${s.awayTeam}: ${s.selectionLabel} @ ${s.oddValue.toFixed(2)}`).join('\n'), 
                   coupon.id
                 )}
              >
@@ -143,7 +160,7 @@ export default function Coupons() {
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-1 space-y-6">
-          <Card className="bg-card border-border sticky top-24">
+          <Card className="bg-card border-border sticky top-24" data-testid="coupon-generator-panel">
             <CardHeader>
               <CardTitle className="uppercase flex items-center gap-2">
                 <BrainCircuit className="h-5 w-5 text-primary" />
@@ -152,18 +169,52 @@ export default function Coupons() {
               <CardDescription>Configurez vos paramètres</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+
+              {/* Period selector */}
+              <div className="space-y-3">
+                <Label className="text-sm font-bold uppercase text-muted-foreground">Période des matchs</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {PERIOD_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const isSelected = period === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        data-testid={`period-${opt.value}`}
+                        onClick={() => setPeriod(opt.value)}
+                        className={`flex flex-col items-start p-3 rounded-md border-2 transition-all text-left ${
+                          isSelected
+                            ? "border-primary bg-primary/10 text-white"
+                            : "border-border bg-background text-muted-foreground hover:border-border/80 hover:bg-secondary/30"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-primary" : ""}`} />
+                          <span className="text-xs font-bold uppercase tracking-wide">{opt.label}</span>
+                        </div>
+                        <span className="text-[11px] text-muted-foreground">{opt.sublabel}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Odd selector */}
               <div className="space-y-4">
                 <Label className="text-sm font-bold uppercase text-muted-foreground">Cote cible visée</Label>
-                <RadioGroup 
-                  defaultValue={targetOdd.toString()} 
+                <RadioGroup
+                  value={targetOdd.toString()}
                   onValueChange={(val) => setTargetOdd(Number(val))}
                   className="grid grid-cols-2 gap-3"
+                  data-testid="odd-selector"
                 >
                   {[2, 5, 10, 20, 50, 100].map(val => (
                     <div key={val}>
                       <RadioGroupItem value={val.toString()} id={`odd-${val}`} className="peer sr-only" />
                       <Label
                         htmlFor={`odd-${val}`}
+                        data-testid={`odd-option-${val}`}
                         className="flex flex-col items-center justify-between rounded-md border-2 border-border bg-background p-4 hover:bg-secondary hover:text-white peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 cursor-pointer font-mono text-lg transition-all"
                       >
                         x{val}
@@ -173,10 +224,11 @@ export default function Coupons() {
                 </RadioGroup>
               </div>
 
-              <Button 
-                onClick={handleGenerate} 
+              <Button
+                onClick={handleGenerate}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-lg uppercase tracking-wider font-bold"
                 disabled={generateMutation.isPending}
+                data-testid="button-generate-coupon"
               >
                 {generateMutation.isPending ? (
                   <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Calcul en cours...</>
@@ -200,7 +252,7 @@ export default function Coupons() {
           {generateMutation.isSuccess && generateMutation.data && (
             <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-2xl font-bold uppercase text-white border-b border-border pb-2">
-                Résultats du calcul
+                Résultats — {PERIOD_OPTIONS.find(p => p.value === period)?.label} · Cote x{targetOdd}
               </h2>
               <Tabs defaultValue="standard" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-secondary mb-6">
@@ -263,7 +315,7 @@ export default function Coupons() {
                               <Badge variant="outline" className={`uppercase text-[10px] ${coupon.status === 'won' ? 'text-green-500 border-green-500' : coupon.status === 'lost' ? 'text-red-500 border-red-500' : 'text-muted-foreground border-border'}`}>
                                 {coupon.status}
                               </Badge>
-                              <span className="text-xs text-muted-foreground">{new Date(coupon.createdAt).toLocaleDateString()}</span>
+                              <span className="text-xs text-muted-foreground">{new Date(coupon.createdAt).toLocaleDateString('fr-FR')}</span>
                             </div>
                             <div className="text-sm font-bold text-white">Cote Totale: {coupon.actualOdd.toFixed(2)}</div>
                           </div>
